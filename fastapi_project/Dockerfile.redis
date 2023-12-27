@@ -1,0 +1,2 @@
+# Dockerfile for Redis service
+FROM redis:latest
