@@ -6,11 +6,11 @@ from urllib.request import Request
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from ProgramIngener.fastapi_project.app.db.db_con import SessionLocal, get_db
-from ProgramIngener.fastapi_project.app.models.user import User
+from db.db_con import SessionLocal, get_db
+from models.user import User
+from schemas.validation import Token, UserCreate, UserResponse
 from ProgramIngener.fastapi_project.utils.config import load_cfg
-from ProgramIngener.fastapi_project.utils.validation import (Token, UserCreate,
-                                                             UserResponse)
+from ProgramIngener.fastapi_project.utils.users import hash_password, validate_password
 
 config = load_cfg()
 
@@ -46,7 +46,7 @@ def register_user(user: UserCreate, db: SessionLocal = Depends(get_db)):
     db_user_email = db.query(User).filter(User.email == user.email).first()
     if db_user_email:
         raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = "fakehashed"
+    hashed_password = hash_password(user.password)
     db_user = User(**user.dict(), hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
@@ -71,9 +71,9 @@ def login_for_access_token(form_data: OAuth2PasswordBearer = Depends()):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-def authenticate_user(username: str, password: str, db):
-    user = db.query(User).filter(User.username == username).first()
-    if user and password == "fakepassword":  # You should verify the password here
+def authenticate_user(username: str, password: str):
+    user = User.query.filter_by(username=username).first()
+    if user and validate_password(password, user.hashed_password):
         return user
 
 
