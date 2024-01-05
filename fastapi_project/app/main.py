@@ -17,16 +17,19 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 Base = declarative_base()
 
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
 
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 app = FastAPI()
+
 
 # Dependency to get the database session
 def get_db():
@@ -36,11 +39,13 @@ def get_db():
     finally:
         db.close()
 
+
 # OAuth2 for password bearer token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 # Token generation for authentication
 def create_access_token(data: dict, expires_delta: datetime.timedelta):
@@ -49,6 +54,7 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 # User registration
 @app.post("/register")
@@ -59,6 +65,7 @@ def register(username: str, password: str, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return {"username": username}
+
 
 # User login and token generation
 @app.post("/token")
@@ -76,8 +83,10 @@ def login(username: str, password: str, db: Session = Depends(get_db)):
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+
 # Caching configuration
 caches.set("default", RedisCacheBackend(REDIS_URL))
+
 
 # Example protected route with caching
 @app.get("/protected")
