@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-databases
-passlib[bcrypt]
-python-dotenv
-python-jose
-fastapi_cache
-PyJWT
-jwt
