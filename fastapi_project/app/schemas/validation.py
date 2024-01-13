@@ -27,10 +27,10 @@ class Token(BaseModel):
     class Config:
         allow_population_by_field_name = True
 
-    @validator("token")
+    @validator("access_token")
     def hexlify_token(cls, value):
         return value.hex
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    username: Optional[str] = None

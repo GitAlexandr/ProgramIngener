@@ -5,12 +5,12 @@ from urllib.request import Request
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from db.db_con import SessionLocal, get_db
-from models.user import User
-from schemas.validation import Token, UserCreate, UserResponse
-from ProgramIngener.fastapi_project.utils.config import load_cfg
-from ProgramIngener.fastapi_project.utils.users import hash_password, validate_password
+from app.db.db_con import SessionLocal, get_db
+from app.models.user import User
+from app.schemas.validation import Token, UserCreate, UserResponse
+from utils.config import load_cfg
+from utils.users import hash_password, validate_password
+
 
 config = load_cfg()
 
@@ -20,22 +20,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, config.key.key, algorithms=[config.key.algorithm])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    return username
 
 
 @app.post("/register", response_model=UserResponse)
@@ -80,17 +64,6 @@ def authenticate_user(username: str, password: str):
 @app.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: str = Depends(get_current_user)):
     return {"username": current_user}
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config.key.key, algorithm=config.key.algorithm)
-    return encoded_jwt
 
 
 @app.middleware("http")

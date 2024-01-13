@@ -1,4 +1,4 @@
-from ProgramIngener.fastapi_project.app.db.db_con import Base
+from app.db.db_con import Base
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 
